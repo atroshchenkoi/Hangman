@@ -1,6 +1,11 @@
 package hangman.core;
 
+import hangman.core.entity.Word;
 import hangman.io.*;
+import hangman.localization.LanguageContext;
+import hangman.localization.LanguageContextFactory;
+import hangman.localization.MessageProvider;
+
 import java.util.Optional;
 
 public class GameLoop {
@@ -14,21 +19,21 @@ public class GameLoop {
         this.writer = writer;
         this.wordPool = wordPool;
     }
+
     public void run() {
+        LanguageContext languageContext = LanguageContextFactory.chooseContext(reader, writer);
+        wordPool.loadWordsByLanguage(languageContext.getValidator());
         while(true) {
-            writer.outputMessage(
-                    "Введите 1, чтобы начать новую игру!\n" +
-                    "Введите 2, чтобы выйти из приложения!"
-            );
+            writer.outputMessage(languageContext.getMessageProvider().promptMainMenu());
             Optional<Character> commandOptional = Optional.empty();
             while (commandOptional.isEmpty()) {
                 String input = reader.readRawInput();
-                commandOptional = validateInput(input);
+                commandOptional = validateInputCommand(input, languageContext.getMessageProvider());
             }
             char command = commandOptional.get();
             if(command == '1') {
-                String word = wordPool.getRandomWord();
-                Game game = new Game(reader, writer, word);
+                Word word = wordPool.getRandomWord();
+                Game game = new Game(reader, writer, languageContext, word);
                 game.run();
             } else if (command == '2') {
                 break;
@@ -36,18 +41,20 @@ public class GameLoop {
         }
     }
 
-    private Optional<Character> validateInput(String input) {
+    private Optional<Character> validateInputCommand(String input, MessageProvider messageProvider) {
         Optional<Character> command = Optional.empty();
         if (input.length() != 1) {
-            writer.outputMessage("Ошибка: введите одно число.");
+            writer.outputMessage(messageProvider.errorWrongLength());
             return command;
         }
         char ch = input.charAt(0);
         if (ch != '1' && ch != '2') {
-            writer.outputMessage("Ошибка: допустимы только команды 1 и 2.");
+            writer.outputMessage(messageProvider.errorInvalidCommand());
             return command;
         }
         command = Optional.of(ch);
         return command;
     }
+
+
 }

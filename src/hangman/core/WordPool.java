@@ -1,38 +1,51 @@
 package hangman.core;
 
+import hangman.core.entity.Word;
 import hangman.io.*;
+import hangman.localization.LanguageValidator;
+
 import java.util.List;
 import java.util.Random;
 
 public class WordPool {
 
-    private final List<String> words;
+    private List<Word> words;
+    private boolean wordsLoaded;
+    private final WordReader reader;
     private final Random random = new Random();
 
     public WordPool(WordReader reader) {
-        List<String> allWords = reader.readWords().stream()
-                .map(String::toLowerCase)
-                .toList();
-        List<String> validWords = allWords.stream()
-                .filter(WordPool::validateWord)
-                .toList();
-        if (validWords.isEmpty()) {
-            throw new IllegalStateException("Нет допустимых слов после фильтрации списка слов...");
-        }
-        this.words = validWords;
+        this.reader = reader;
+        wordsLoaded = false;
     }
 
-    public String getRandomWord() {
+    public Word getRandomWord() {
+        if (!wordsLoaded) {
+            throw new IllegalStateException("Слова не загружены!");
+        }
         return words.get(random.nextInt(words.size()));
     }
 
-    private static boolean validateWord(String word) {
-        if (word == null || word.isEmpty()) {
+    public void loadWordsByLanguage(LanguageValidator languageValidator) {
+        this.words = reader.readWords().stream()
+                .map(String::toLowerCase)
+                .filter(el -> WordPool.validateStringWord(el, languageValidator))
+                .map(Word::new)
+                .toList();
+        if (words.isEmpty()) {
+            throw new IllegalStateException("Не найдены подходящие слова после загрузки!");
+        } else {
+            wordsLoaded = true;
+        }
+    }
+
+    private static boolean validateStringWord(String stringWord, LanguageValidator languageValidator) {
+        if (stringWord == null || stringWord.isEmpty()) {
             return false;
         }
-        if (word.length() < 5 || word.length() > 15) {
+        if (stringWord.length() < 5 || stringWord.length() > 15) {
             return false;
         }
-        return word.matches("[а-яё]+");
+        return languageValidator.isValidStringWord(stringWord);
     }
 }

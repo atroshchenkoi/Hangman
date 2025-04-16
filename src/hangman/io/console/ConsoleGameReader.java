@@ -1,4 +1,6 @@
-package hangman.io;
+package hangman.io.console;
+
+import hangman.io.GameReader;
 
 import java.util.Scanner;
 

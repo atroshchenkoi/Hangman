@@ -1,6 +1,12 @@
 package hangman.core;
 
+import hangman.core.entity.Letter;
+import hangman.core.entity.Word;
 import hangman.io.*;
+import hangman.localization.LanguageContext;
+import hangman.localization.LanguageValidator;
+import hangman.localization.MessageProvider;
+
 import java.util.*;
 
 public class Game {
@@ -9,66 +15,81 @@ public class Game {
 
     private final GameReader reader;
     private final GameWriter writer;
+    private final LanguageValidator languageValidator;
+    private final MessageProvider messageProvider;
 
     private int errorCount;
-    private final String word;
-    private final Set<Character> enterLetters;
-    private final Map<Character, Boolean> revealedLetters;
+    private final Word word;
+    private final Set<Letter> enterLetters;
 
-    public Game(GameReader reader, GameWriter writer, String word) {
+    public Game(GameReader reader, GameWriter writer, LanguageContext languageContext, Word word) {
         this.reader = reader;
         this.writer = writer;
+        this.languageValidator = languageContext.getValidator();
+        this.messageProvider = languageContext.getMessageProvider();
         this.errorCount = 0;
         this.word = word;
         this.enterLetters = new TreeSet<>();
-        this.revealedLetters = new HashMap<>();
-        word.chars().mapToObj(el -> (char) el).forEach(el -> revealedLetters.put(el, false));
     };
 
     public void run() {
-        writer.outputCurrentState(errorCount, word, enterLetters, revealedLetters);
-        while (errorCount < MAX_ERROR_COUNT && !(revealedLetters.values().stream().allMatch(el -> el))) {
-            Optional<Character> optionalLetter = Optional.empty();
-            while (optionalLetter.isEmpty()) {
-                writer.outputMessage("Введите букву (а-я)!");
+        writer.outputHangmanStage(errorCount);
+        writer.outputMessage(messageProvider.currentGameState(errorCount, enterLetters, word));
+
+        while (errorCount < MAX_ERROR_COUNT && word.getLetters().stream().anyMatch(l -> !l.isVisible())) {
+            Optional<Character> inputCharOptional = Optional.empty();
+
+            while (inputCharOptional.isEmpty()) {
+                writer.outputMessage(messageProvider.promptLetterInput());
                 String input = reader.readRawInput();
-                optionalLetter = validateInput(input);
+                inputCharOptional = validateInput(input);
             }
-            Character letter = optionalLetter.get();
+
+            Letter letter = new Letter(inputCharOptional.get());
             putLetter(letter);
-            writer.outputCurrentState(errorCount, word, enterLetters, revealedLetters);
+
+            writer.outputHangmanStage(errorCount);
+            writer.outputMessage(messageProvider.currentGameState(errorCount, enterLetters, word));
         }
+
         if (errorCount == MAX_ERROR_COUNT) {
-            writer.outputMessage("Вы проиграли! Загаданное слово: " + word);
+            writer.outputMessage(messageProvider.loseMessage(word.getFullValue()));
         } else {
-            writer.outputMessage("Вы победили! Загаданное слово: " + word);
+            writer.outputMessage(messageProvider.winMessage(word.getFullValue()));
         }
-    }
-    private Optional<Character> validateInput(String input) {
-        if (input.length() != 1) {
-            writer.outputMessage("Ошибка: нужно ввести ровно один символ.");
-            return Optional.empty();
-        }
-        char ch = input.charAt(0);
-        if ((ch < 'а' || ch > 'я') && ch != 'ё') {
-            writer.outputMessage("Ошибка: допустимы только буквы русского алфавита (а-я).");
-            return Optional.empty();
-        }
-        if (enterLetters.contains(ch)) {
-            writer.outputMessage(String.format("Ошибка: буква %c уже была введена!", ch));
-            return Optional.empty();
-        }
-        return Optional.of(ch);
     }
 
-    private void putLetter(Character letter) {
+
+    private Optional<Character> validateInput(String input) {
+        if (input.length() != 1) {
+            writer.outputMessage(messageProvider.errorWrongLength());
+            return Optional.empty();
+        }
+
+        char inputChar = input.charAt(0);
+
+        if (!languageValidator.isValidCharLetter(inputChar)) {
+            writer.outputMessage(messageProvider.errorInvalidLetter());
+            return Optional.empty();
+        }
+
+        if (enterLetters.contains(new Letter(inputChar))) {
+            writer.outputMessage(messageProvider.errorLetterAlreadyEntered(inputChar));
+            return Optional.empty();
+        }
+
+        return Optional.of(inputChar);
+    }
+
+    private void putLetter(Letter letter) {
         enterLetters.add(letter);
-        if (revealedLetters.containsKey(letter)) {
-            revealedLetters.put(letter, true);
-            writer.outputMessage(String.format("Буква %c угадана правильно!", letter));
+        if (word.containsLetter(letter)) {
+            word.revealLetter(letter);
+            writer.outputMessage(messageProvider.correctLetterMessage(letter.getValue()));
         } else {
             errorCount++;
-            writer.outputMessage(String.format("Буквы %c нет в слове!", letter));
+            writer.outputMessage(messageProvider.incorrectLetterMessage(letter.getValue()));
         }
     }
+
 }

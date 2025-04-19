@@ -30,6 +30,11 @@ public class Word {
                 .forEach(el -> el.setVisible(true));
     }
 
+    public boolean allLettersVisible() {
+        return letters.stream()
+                .allMatch(Letter::isVisible);
+    }
+
     public String getFullValue() {
         return letters.stream()
                 .map(el -> String.valueOf(el.getValue()))

@@ -8,7 +8,7 @@ public class ConsoleGameReader implements GameReader {
     private final Scanner scanner = new Scanner(System.in);
 
     @Override
-    public String readRawInput() {
+    public String read() {
         return scanner.nextLine().trim();
     }
 }

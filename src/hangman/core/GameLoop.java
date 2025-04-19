@@ -2,59 +2,46 @@ package hangman.core;
 
 import hangman.core.entity.Word;
 import hangman.io.*;
-import hangman.localization.LanguageContext;
-import hangman.localization.LanguageContextFactory;
-import hangman.localization.MessageProvider;
-
-import java.util.Optional;
+import hangman.localization.dictionary.DictionaryLanguageValidator;
+import hangman.localization.provider.MessageProvider;
 
 public class GameLoop {
 
-    private final WordPool wordPool;
+    public final static String COMMAND_START_GAME = "1";
+    public final static String COMMAND_END_GAME = "2";
+
     private final GameReader reader;
     private final GameWriter writer;
+    private final MessageProvider messageProvider;
+    private final DictionaryLanguageValidator dictionaryLanguageValidator;
+    private final WordPool wordPool;
 
-    public GameLoop(GameReader reader, GameWriter writer, WordPool wordPool) {
+    public GameLoop(GameReader reader, GameWriter writer, MessageProvider messageProvider, DictionaryLanguageValidator dictionaryLanguageValidator, WordPool wordPool) {
         this.reader = reader;
         this.writer = writer;
+        this.messageProvider = messageProvider;
+        this.dictionaryLanguageValidator = dictionaryLanguageValidator;
         this.wordPool = wordPool;
     }
 
-    public void run() {
-        LanguageContext languageContext = LanguageContextFactory.chooseContext(reader, writer);
-        wordPool.loadWordsByLanguage(languageContext.getValidator());
+    public void start() {
         while(true) {
-            writer.outputMessage(languageContext.getMessageProvider().promptMainMenu());
-            Optional<Character> commandOptional = Optional.empty();
-            while (commandOptional.isEmpty()) {
-                String input = reader.readRawInput();
-                commandOptional = validateInputCommand(input, languageContext.getMessageProvider());
-            }
-            char command = commandOptional.get();
-            if(command == '1') {
+            String promptMainMenuMessage = messageProvider.promptMainMenu();
+            writer.outputMessage(promptMainMenuMessage);
+            String command = CommandInputHandlerUtils.inputCommand(
+                    messageProvider,
+                    writer,
+                    reader,
+                    COMMAND_START_GAME,
+                    COMMAND_END_GAME
+            );
+            if(command.equals(COMMAND_START_GAME)) {
                 Word word = wordPool.getRandomWord();
-                Game game = new Game(reader, writer, languageContext, word);
-                game.run();
-            } else if (command == '2') {
+                Game game = new Game(reader, writer, messageProvider, dictionaryLanguageValidator, word);
+                game.start();
+            } else if (command.equals(COMMAND_END_GAME)) {
                 break;
             }
         }
     }
-
-    private Optional<Character> validateInputCommand(String input, MessageProvider messageProvider) {
-        Optional<Character> command = Optional.empty();
-        if (input.length() != 1) {
-            writer.outputMessage(messageProvider.errorWrongLength());
-            return command;
-        }
-        char ch = input.charAt(0);
-        if (ch != '1' && ch != '2') {
-            writer.outputMessage(messageProvider.errorInvalidCommand());
-            return command;
-        }
-        command = Optional.of(ch);
-        return command;
-    }
-
-
 }

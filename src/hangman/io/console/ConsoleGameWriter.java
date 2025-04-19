@@ -7,7 +7,7 @@ public class ConsoleGameWriter implements GameWriter {
     private static final String[] HANGMAN_STAGES = {
             """
     
-     
+    
     
     
     

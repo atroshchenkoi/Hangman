@@ -1,4 +1,4 @@
-package hangman.core;
+package hangman.io.util;
 
 import java.util.List;
 

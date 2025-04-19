@@ -5,6 +5,7 @@ import hangman.core.*;
 import hangman.io.console.ConsoleGameReader;
 import hangman.io.console.ConsoleGameWriter;
 import hangman.io.file.FileTextReader;
+import hangman.io.util.CommandInputHandlerUtils;
 import hangman.localization.dictionary.DictionaryLanguage;
 import hangman.localization.dictionary.DictionaryLanguageValidator;
 import hangman.localization.provider.EnglishMessageProvider;

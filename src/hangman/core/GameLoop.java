@@ -2,6 +2,7 @@ package hangman.core;
 
 import hangman.core.entity.Word;
 import hangman.io.*;
+import hangman.io.util.CommandInputHandlerUtils;
 import hangman.localization.dictionary.DictionaryLanguageValidator;
 import hangman.localization.provider.MessageProvider;
 

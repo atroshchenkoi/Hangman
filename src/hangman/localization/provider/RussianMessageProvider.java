@@ -3,7 +3,6 @@ package hangman.localization.provider;
 import hangman.core.GameLoop;
 import hangman.core.entity.Letter;
 import hangman.core.entity.Word;
-import hangman.localization.dictionary.DictionaryLanguage;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,8 +13,8 @@ import static java.util.stream.Collectors.joining;
 public class RussianMessageProvider implements MessageProvider {
 
     @Override
-    public String promptLetterInput(DictionaryLanguage dictionaryLanguage) {
-        return String.format("Введите строчную букву (%s)!", dictionaryLanguage.getRegex());
+    public String promptLetterInput() {
+        return "Введите строчную букву (а-я)!";
     }
 
     @Override
@@ -24,8 +23,8 @@ public class RussianMessageProvider implements MessageProvider {
     }
 
     @Override
-    public String errorInvalidLetter(DictionaryLanguage dictionaryLanguage) {
-        return String.format("Ошибка: допустимы только строчные буквы: (%s).", dictionaryLanguage.getUserRegex());
+    public String errorInvalidLetter() {
+        return "Ошибка: допустимы только строчные буквы (а-я):";
     }
 
     @Override
@@ -62,34 +61,8 @@ public class RussianMessageProvider implements MessageProvider {
     }
 
     @Override
-    public String promptDictionaryLanguageSelectMenu() {
-        String startText = "Выберите язык угадываемых слов:\n";
-        List<String> dictionaryLanguagesInfo = Arrays.stream(DictionaryLanguage.values())
-                .map(el -> "Код: " + el.toString())
-                .toList();
-        return startText + String.join("\n", dictionaryLanguagesInfo);
-    }
-
-    @Override
-    public String promptProviderLanguageSelectMenu() {
-        String startText = "Выберите язык интерфейса:\n";
-        List<String> providerLanguagesInfo = Arrays.stream(ProviderLanguage.values())
-                .map(el -> "Код: " + el.toString())
-                .toList();
-        return startText + String.join("\n", providerLanguagesInfo);
-    }
-
-    @Override
-    public String errorInvalidCommand(List<String> validKeys) {
-        return String.format(
-                "Ошибка: недопустимая команда. Допустимые команды: %s",
-                String.join(", ", validKeys)
-        );
-    }
-
-    @Override
-    public String errorInvalidCommand(String... validKeys) {
-        return errorInvalidCommand(Arrays.asList(validKeys));
+    public String errorInvalidCommand() {
+        return "Недопустимая команда!";
     }
 
     @Override

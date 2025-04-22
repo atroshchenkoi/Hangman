@@ -17,7 +17,7 @@ public class WordPool {
     private final Random random = new Random();
 
 
-    public WordPool(TextReader reader, DictionaryLanguageValidator validator) {
+    public WordPool(TextReader reader, DictionaryValidator validator) {
         this.words = loadAndValidateWordsFromReader(reader, validator);
     }
 
@@ -25,7 +25,7 @@ public class WordPool {
         return words.get(random.nextInt(words.size()));
     }
 
-    public List<Word> loadAndValidateWordsFromReader(TextReader reader, DictionaryLanguageValidator validator) {
+    public List<Word> loadAndValidateWordsFromReader(TextReader reader, DictionaryValidator validator) {
         List<Word> words = reader.read().stream()
                 .filter(Objects::nonNull)
                 .map(String::toLowerCase)
@@ -40,15 +40,15 @@ public class WordPool {
         return words;
     }
 
-    private static boolean validateWords(List<Word> words, DictionaryLanguageValidator validator) {
+    private static boolean validateWords(List<Word> words, DictionaryValidator validator) {
         return words.stream().allMatch(el -> validateWord(el, validator));
     }
 
-    private static boolean validateWord(Word word, DictionaryLanguageValidator validator) {
+    private static boolean validateWord(Word word, DictionaryValidator validator) {
         int wordLength = word.getFullValue().length();
         if (wordLength < MIN_WORD_LENGTH || wordLength > MAX_WORD_LENGTH) {
             return false;
         }
-        return validator.isValidString(word.getFullValue());
+        return validator.isValid(word.getFullValue());
     }
 }

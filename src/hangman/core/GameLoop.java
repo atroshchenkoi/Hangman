@@ -2,8 +2,9 @@ package hangman.core;
 
 import hangman.core.entity.Word;
 import hangman.io.*;
-import hangman.io.util.CommandInputHandlerUtils;
-import hangman.localization.dictionary.DictionaryLanguageValidator;
+import hangman.io.dialog.Dialog;
+import hangman.io.dialog.StringSelectDialog;
+import hangman.localization.dictionary.DictionaryValidator;
 import hangman.localization.provider.MessageProvider;
 
 public class GameLoop {
@@ -13,32 +14,29 @@ public class GameLoop {
 
     private final GameReader reader;
     private final GameWriter writer;
-    private final MessageProvider messageProvider;
-    private final DictionaryLanguageValidator dictionaryLanguageValidator;
+    private final MessageProvider provider;
+    private final DictionaryValidator validator;
     private final WordPool wordPool;
 
-    public GameLoop(GameReader reader, GameWriter writer, MessageProvider messageProvider, DictionaryLanguageValidator dictionaryLanguageValidator, WordPool wordPool) {
+    public GameLoop(GameReader reader, GameWriter writer, MessageProvider provider, DictionaryValidator validator, WordPool wordPool) {
         this.reader = reader;
         this.writer = writer;
-        this.messageProvider = messageProvider;
-        this.dictionaryLanguageValidator = dictionaryLanguageValidator;
+        this.provider = provider;
+        this.validator = validator;
         this.wordPool = wordPool;
     }
 
     public void start() {
         while(true) {
-            String promptMainMenuMessage = messageProvider.promptMainMenu();
-            writer.outputMessage(promptMainMenuMessage);
-            String command = CommandInputHandlerUtils.inputCommand(
-                    messageProvider,
-                    writer,
-                    reader,
-                    COMMAND_START_GAME,
-                    COMMAND_END_GAME
-            );
+            String menuMessage = provider.promptMainMenu();
+            String failMessage = provider.errorInvalidCommand();
+
+            Dialog<String> dialog = new StringSelectDialog(reader::read, writer::outputMessage, menuMessage, failMessage, COMMAND_START_GAME, COMMAND_END_GAME);
+            String command = dialog.input();
+
             if(command.equals(COMMAND_START_GAME)) {
                 Word word = wordPool.getRandomWord();
-                Game game = new Game(reader, writer, messageProvider, dictionaryLanguageValidator, word);
+                Game game = new Game(reader, writer, provider, validator, word);
                 game.start();
             } else if (command.equals(COMMAND_END_GAME)) {
                 break;

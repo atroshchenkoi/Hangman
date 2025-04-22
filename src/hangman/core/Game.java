@@ -3,8 +3,8 @@ package hangman.core;
 import hangman.core.entity.Letter;
 import hangman.core.entity.Word;
 import hangman.io.*;
+import hangman.localization.dictionary.DictionaryValidator;
 import hangman.localization.provider.*;
-import hangman.localization.dictionary.*;
 
 import java.util.*;
 
@@ -15,18 +15,18 @@ public class Game {
 
     private final GameReader reader;
     private final GameWriter writer;
-    private final DictionaryLanguageValidator dictionaryLanguageValidator;
-    private final MessageProvider messageProvider;
+    private final DictionaryValidator validator;
+    private final MessageProvider provider;
 
     private int errorCount;
     private final Word word;
     private final Set<Letter> enterLetters;
 
-    public Game(GameReader reader, GameWriter writer, MessageProvider messageProvider, DictionaryLanguageValidator dictionaryLanguageValidator, Word word) {
+    public Game(GameReader reader, GameWriter writer, MessageProvider provider, DictionaryValidator validator, Word word) {
         this.reader = reader;
         this.writer = writer;
-        this.dictionaryLanguageValidator = dictionaryLanguageValidator;
-        this.messageProvider = messageProvider;
+        this.validator = validator;
+        this.provider = provider;
         this.errorCount = START_ERROR_COUNT;
         this.word = word;
         this.enterLetters = new TreeSet<>();
@@ -34,19 +34,19 @@ public class Game {
 
     public void start() {
         writer.outputHangmanStage(errorCount);
-        String messageGameState = messageProvider.currentGameState(errorCount, enterLetters, word);
+        String messageGameState = provider.currentGameState(errorCount, enterLetters, word);
         writer.outputMessage(messageGameState);
 
         while (!isEndGame()) {
             Letter letter = inputLetter();
             putLetter(letter);
             writer.outputHangmanStage(errorCount);
-            writer.outputMessage(messageProvider.currentGameState(errorCount, enterLetters, word));
+            writer.outputMessage(provider.currentGameState(errorCount, enterLetters, word));
         }
         if (isWin()) {
-            writer.outputMessage(messageProvider.winMessage(word));
+            writer.outputMessage(provider.winMessage(word));
         } else {
-            writer.outputMessage(messageProvider.loseMessage(word));
+            writer.outputMessage(provider.loseMessage(word));
         }
     }
 
@@ -55,7 +55,7 @@ public class Game {
     private Letter inputLetter() {
         Optional<Character> inputCharOptional = Optional.empty();
         while (inputCharOptional.isEmpty()) {
-            String messagePromptLetterInput = messageProvider.promptLetterInput(dictionaryLanguageValidator.getLanguage());
+            String messagePromptLetterInput = provider.promptLetterInput();
             writer.outputMessage(messagePromptLetterInput);
             String input = reader.read();
             inputCharOptional = validateInput(input);
@@ -65,13 +65,13 @@ public class Game {
 
     private Optional<Character> validateInput(String input) {
         if (input.length() != 1) {
-            String messageWrongLength = messageProvider.errorWrongLength();
+            String messageWrongLength = provider.errorWrongLength();
             writer.outputMessage(messageWrongLength);
             return Optional.empty();
         }
         char inputChar = input.charAt(0);
-        if (!dictionaryLanguageValidator.isValidString(String.valueOf(inputChar))) {
-            String messageInvalidLetter = messageProvider.errorInvalidLetter(dictionaryLanguageValidator.getLanguage());
+        if (!validator.isValid(String.valueOf(inputChar))) {
+            String messageInvalidLetter = provider.errorInvalidLetter();
             writer.outputMessage(messageInvalidLetter);
             return Optional.empty();
         }
@@ -80,16 +80,16 @@ public class Game {
 
     private void putLetter(Letter letter) {
         if (enterLetters.contains(letter)) {
-            writer.outputMessage(messageProvider.errorLetterAlreadyEntered(letter));
+            writer.outputMessage(provider.errorLetterAlreadyEntered(letter));
             return;
         }
         enterLetters.add(letter);
         if (word.containsLetter(letter)) {
             word.revealLetter(letter);
-            writer.outputMessage(messageProvider.correctLetterMessage(letter));
+            writer.outputMessage(provider.correctLetterMessage(letter));
         } else {
             errorCount++;
-            writer.outputMessage(messageProvider.incorrectLetterMessage(letter));
+            writer.outputMessage(provider.incorrectLetterMessage(letter));
         }
     }
 

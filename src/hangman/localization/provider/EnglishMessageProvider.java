@@ -3,7 +3,6 @@ package hangman.localization.provider;
 import hangman.core.GameLoop;
 import hangman.core.entity.Letter;
 import hangman.core.entity.Word;
-import hangman.localization.dictionary.DictionaryLanguage;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,8 +13,8 @@ import static java.util.stream.Collectors.joining;
 public class EnglishMessageProvider implements MessageProvider {
 
     @Override
-    public String promptLetterInput(DictionaryLanguage dictionaryLanguage) {
-        return String.format("Enter a letter (%s):", dictionaryLanguage.getUserRegex());
+    public String promptLetterInput( ) {
+        return "Enter a letter (a-z):";
     }
 
     @Override
@@ -24,8 +23,8 @@ public class EnglishMessageProvider implements MessageProvider {
     }
 
     @Override
-    public String errorInvalidLetter(DictionaryLanguage dictionaryLanguage) {
-        return String.format("Error: %s letters are allowed.", dictionaryLanguage.getUserRegex());
+    public String errorInvalidLetter( ) {
+        return "Error: (a-z) letters are allowed.";
     }
 
     @Override
@@ -62,36 +61,9 @@ public class EnglishMessageProvider implements MessageProvider {
     }
 
     @Override
-    public String promptDictionaryLanguageSelectMenu() {
-        String startText = "Available languages for guessing words:\n";
-        List<String> dictionaryLanguagesInfo = Arrays.stream(DictionaryLanguage.values())
-                .map(el -> "Code: " + el.toString())
-                .toList();
-        return startText + String.join("\n", dictionaryLanguagesInfo);
+    public String errorInvalidCommand() {
+        return "Illegal input command.";
     }
-
-    @Override
-    public String promptProviderLanguageSelectMenu() {
-        String startText = "Available languages for interface:\n";
-        List<String> providerLanguagesInfo = Arrays.stream(ProviderLanguage.values())
-                                            .map(el -> "Code: " + el.toString())
-                                            .toList();
-        return startText + String.join("\n", providerLanguagesInfo);
-    }
-
-    @Override
-    public String errorInvalidCommand(List<String> validKeys) {
-        return String.format(
-                "Error: invalid options. Valid options: %s",
-                String.join(", ", validKeys)
-        );
-    }
-
-    @Override
-    public String errorInvalidCommand(String... validKeys) {
-        return errorInvalidCommand(Arrays.asList(validKeys));
-    }
-
 
     @Override
     public String currentGameState(int errorCount, Set<Letter> enteredLetters, Word word) {

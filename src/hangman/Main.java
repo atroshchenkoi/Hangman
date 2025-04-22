@@ -1,58 +1,47 @@
 package hangman;
 
+import hangman.core.GameLoop;
+import hangman.core.WordPool;
 import hangman.io.*;
-import hangman.core.*;
+import hangman.io.console.ColorConsoleGameWriter;
 import hangman.io.console.ConsoleGameReader;
-import hangman.io.console.ConsoleGameWriter;
+import hangman.io.dialog.Dialog;
+import hangman.io.dialog.StringSelectDialog;
 import hangman.io.file.FileTextReader;
-import hangman.io.util.CommandInputHandlerUtils;
-import hangman.localization.dictionary.DictionaryLanguage;
-import hangman.localization.dictionary.DictionaryLanguageValidator;
-import hangman.localization.provider.EnglishMessageProvider;
+import hangman.localization.Language;
+import hangman.localization.dictionary.DictionaryValidator;
+import hangman.localization.dictionary.DictionaryValidatorFactory;
 import hangman.localization.provider.MessageProvider;
 import hangman.localization.provider.MessageProviderFactory;
-import hangman.localization.provider.ProviderLanguage;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) {
+        GameReader reader = new ConsoleGameReader();
+        GameWriter writer = new ColorConsoleGameWriter(ColorConsoleGameWriter.Color.RED, ColorConsoleGameWriter.Color.GREEN);
 
-        GameWriter gameWriter = new ConsoleGameWriter();
-        GameReader gameReader = new ConsoleGameReader();
-        MessageProvider baseMessageProvider = new EnglishMessageProvider();
+        Language language = inputLanguage(reader, writer);
+        MessageProvider messageProvider = MessageProviderFactory.get(language);
+        DictionaryValidator validator = DictionaryValidatorFactory.get(language);
 
-        MessageProvider gameMessageProvider = selectMessageProvider(baseMessageProvider, gameWriter, gameReader);
-        DictionaryLanguageValidator gameDictionaryLanguageValidator = selectDictionaryLanguageValidator(gameMessageProvider, gameWriter, gameReader);
+        TextReader textReader = new FileTextReader("src/resources/words/ru.txt");
+        WordPool gameWordPool = new WordPool(textReader, validator);
 
-        TextReader gameTextReader = new FileTextReader(gameDictionaryLanguageValidator.getLanguage());
-        WordPool gameWordPool = new WordPool(gameTextReader, gameDictionaryLanguageValidator);
-
-        GameLoop gameLoop = new GameLoop(gameReader, gameWriter, gameMessageProvider, gameDictionaryLanguageValidator, gameWordPool);
+        GameLoop gameLoop = new GameLoop(reader, writer, messageProvider, validator, gameWordPool);
         gameLoop.start();
+
     }
 
-    private static MessageProvider selectMessageProvider(MessageProvider baseMessageProvider, GameWriter writer, GameReader reader) {
-        String title = baseMessageProvider.promptProviderLanguageSelectMenu();
-        writer.outputMessage(title);
-        String providerCode = CommandInputHandlerUtils.inputCommand(
-                baseMessageProvider,
-                writer,
-                reader,
-                ProviderLanguage.getProviderLanguagesCodes()
-        );
-        ProviderLanguage providerLanguage = ProviderLanguage.getByCode(providerCode);
-        return MessageProviderFactory.getByLanguage(providerLanguage);
-    }
-
-    private static DictionaryLanguageValidator selectDictionaryLanguageValidator(MessageProvider messageProvider, GameWriter writer, GameReader reader) {
-        String title = messageProvider.promptDictionaryLanguageSelectMenu();
-        writer.outputMessage(title);
-        String dictionaryLanguageCode =  CommandInputHandlerUtils.inputCommand(
-                messageProvider,
-                writer,
-                reader,
-                DictionaryLanguage.getDictionaryLanguagesCodes()
-        );
-        DictionaryLanguage dictionaryLanguage = DictionaryLanguage.getByCode(dictionaryLanguageCode);
-        return new DictionaryLanguageValidator(dictionaryLanguage);
+    private static Language inputLanguage(GameReader reader, GameWriter writer) {
+        List<String> keys =  Arrays.stream(Language.values()).map(Enum::name).toList();
+        String languagesCodes = String.join(", ", keys);
+        String title = "Enter interface language: " + languagesCodes;
+        String failMessage = "Illegal input language.";
+        Dialog<String> stringDialog = new StringSelectDialog(reader::read, writer::outputMessage, title, failMessage, keys);
+        String languageName = stringDialog.input().toUpperCase();
+        return Language.valueOf(languageName);
     }
 }

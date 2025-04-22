@@ -1,7 +1,6 @@
 package hangman.io.file;
 
 import hangman.io.TextReader;
-import hangman.localization.dictionary.DictionaryLanguage;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,11 +10,10 @@ import java.util.stream.Stream;
 
 public class FileTextReader implements TextReader {
 
-    private static final String START_PATH_NAME = "src/resources/words/";
     private final String filePath;
 
-    public FileTextReader(DictionaryLanguage language) {
-        this.filePath = START_PATH_NAME + language.getCode() + ".txt";
+    public FileTextReader(String filePath) {
+        this.filePath = filePath;
     }
 
     @Override
